@@ -102,6 +102,39 @@ def model2humanparse(model_image_name):
     dp_path = os.path.join('humanparse', model_image_name)
     dp_img.save(dp_path)
     
+def model2openpose(model_image_name):
+    image_path = os.path.join('model', model_image_name)
+    image = cv2.imread(image_path)
+
+    img_data = cv2.imencode(".jpg", image)[1]
+
+    files = {
+        'image': ('a.jpg', img_data.tobytes(), 'image/jpg', {'Expires': '0'})
+    }   
+
+    dp_res = requests.post("http://49.50.163.219:30006/openpose-img/",
+                        files=files)
+    json_res = requests.post("http://49.50.163.219:30006/openpose-json/",
+                        files=files)
+    
+    dp_data = dp_res.content
+    json_data = json_res.content.decode("utf-8")
+    
+    decoded_data = json.loads(json_data)
+    
+    dp_nparr = np.frombuffer(dp_data, np.uint8)
+    dp_nparr = cv2.imdecode(dp_nparr, cv2.IMREAD_COLOR)
+
+    # save image to file
+    dp_img = Image.fromarray(dp_nparr)
+
+    dp_path = os.path.join('openpose', model_image_name)
+    dp_img.save(dp_path)
+    
+    json_path = os.path.join('openpose-json', model_image_name.replace('.jpg', '.json'))
+    with open(json_path, "w") as outfile:
+        json.dump(decoded_data, outfile)
+    
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('-n','--image_name', type=str, default='1008026.jpg', help='image name')
@@ -114,4 +147,5 @@ if __name__ == "__main__":
     # original2refocus(image_name)
     # original2mask(image_name)
     # model2densepose(model_image_name)
-    model2humanparse(model_image_name)
+    # model2humanparse(model_image_name)
+    model2openpose(model_image_name)
