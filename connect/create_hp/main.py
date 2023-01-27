@@ -12,24 +12,25 @@ import subprocess
 
 app = FastAPI()
 
-@app.post('/densepose/')
+@app.post('/human-parse/')
 async def create_file(
     image: bytes = File(...),
 ):
     img = Image.open(io.BytesIO(image))
     os.makedirs("./data/model_image", exist_ok=True)
-    os.makedirs("./data/densepose_output", exist_ok=True)
+    os.makedirs("./data/humanparse_output", exist_ok=True)
     
     id_2_str = str(uuid4())
     model_path = f"/opt/ml/Final_Project/connect/data/model_image/{id_2_str}.jpg"
-    output_path = f"/opt/ml/Final_Project/connect/data/densepose_output/{id_2_str}.jpg"
+    output_path = f"/opt/ml/Final_Project/connect/data/humanparse_output/{id_2_str}.jpg"
+    
+    model_folder = "/opt/ml/Final_Project/connect/data/model_image"
+    output_folder = "/opt/ml/Final_Project/connect/data/humanparse_output"
     
     img.save(model_path)
     
-    output = subprocess.getoutput(f"python densepose/densepose_new/create_Densepose.py dump \
-        --cfg '/opt/ml/Final_Project/connect/densepose/densepose_new/DensePose/configs/densepose_rcnn_R_101_FPN_DL_s1x.yaml' \
-        --model 'https://dl.fbaipublicfiles.com/densepose/densepose_rcnn_R_101_FPN_DL_s1x/165712116/model_final_844d15.pkl' \
-        --input {model_path} --output {output_path}")
+    output = subprocess.getoutput(f"python create_hp/human_parse/inf_png.py \
+        -i {model_folder} -o {output_folder}")
     
     # get image from ./data/densepose_output
     densePose_img = Image.open(output_path)

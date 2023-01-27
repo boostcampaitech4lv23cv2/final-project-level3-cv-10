@@ -10,7 +10,7 @@ import numpy as np
 from uuid import UUID, uuid4
 import subprocess
 
-from mask.refocus_Images import get_refocus_image_mask
+from create_mask.refocus_Images import get_refocus_image_mask
 
 app = FastAPI()
 
