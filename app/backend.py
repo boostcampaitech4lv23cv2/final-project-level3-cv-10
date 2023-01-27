@@ -15,6 +15,7 @@ sys.path.append('/opt/ml/input/VTO')
 from HR_VITON.networks import ConditionGenerator, load_checkpoint, make_grid
 from HR_VITON.network_generator import SPADEGenerator
 from HR_VITON.cp_dataset_test import CPDatasetTest, CPDataLoader
+from HR_VITON.get_parse_agnostic import get_im_parse_agnostic
 from collections import OrderedDict
 import os
 from PIL import Image
@@ -25,6 +26,7 @@ from predict import get_prediction
 import time
 import asyncio
 from urllib.request import urlopen
+import json
 
 # yj
 import cv2 
@@ -198,22 +200,29 @@ async def upload_md(md_file: UploadFile = File(...),
         fp.write(cloth_content)  # 서버 로컬 스토리지에 이미지 저장 (쓰기)
 
     start_time = time.time() 
-    await main(cloth_filename)
+    print("Start")
+    await main(cloth_filename, md_filename)
+    # get_im_parse_agnostic
     print(f"End time {time.time() - start_time}")
     
     return {"id": id,
             "md_filename": md_filename,
             "cloth_filename": cloth_filename}
 
-async def main(cloth_filename) :
-    await asyncio.gather(original2refocus(cloth_filename),
-                         original2mask(cloth_filename))
+async def main(cloth_filename, md_filename) :
+    await asyncio.gather(#original2refocus(cloth_filename),
+                        #  original2mask(cloth_filename),
+                        #  densepose(md_filename),
+                        #  humanparse(md_filename),
+                         openpose(md_filename)
+                        )
 
     # await original2refocus(cloth_filename)
     # await original2mask(cloth_filename)
 
 # [cloth_mask] Server
 async def original2refocus(cloth_filename):
+    print("start : original2refocus")
     image_path = f"./image/{cloth_filename}"
     image = cv2.imread(image_path)
     img_data = cv2.imencode(".jpg", image)[1]
@@ -225,18 +234,11 @@ async def original2refocus(cloth_filename):
     refocus_res = requests.post("http://49.50.163.219:30003/refocus/",
                         files=files)
 
-    refocus_data = refocus_res.content
+    with open('data/test/cloth/cloth.jpg', 'wb') as f:
+        f.write(refocus_res.content)
 
-    refocus_nparr = np.frombuffer(refocus_data, np.uint8)
-    refocus_img = cv2.imdecode(refocus_nparr, cv2.IMREAD_COLOR)
-    # save image to file
-    refocus_img = Image.fromarray(refocus_img)
-
-    refocus_path = os.path.join('refocus', cloth_filename)
-    refocus_img.save(refocus_path)
-
-# refocus cloth to mask
 async def original2mask(cloth_filename):
+    print("start : original2mask")
     refocus_path = f"./image/{cloth_filename}"
     refocus_image = cv2.imread(refocus_path)
     refocus_data = cv2.imencode(".jpg", refocus_image)[1]
@@ -247,62 +249,91 @@ async def original2mask(cloth_filename):
     mask_res  = requests.post("http://49.50.163.219:30003/cloth-mask/",
                      files=files)
 
-    with open('image.jpg', 'wb') as f:
+    with open('data/test/cloth_mask/cloth_mask.jpg', 'wb') as f:
         f.write(mask_res.content)
 
-    # mask_data = mask_res.content
-    # mask_nparr = np.frombuffer(mask_data, np.uint8)
-    # mask_img = cv2.imdecode(mask_nparr, cv2.IMREAD_COLOR)
-    # # save image to file
-    # mask_img_file = Image.fromarray(mask_img)
-    # mask_path = os.path.join('mask', cloth_filename)
-    # mask_img_file.save(mask_path)
+# [densepose] Server
+async def densepose(md_filename):
+    print("start : densepose")
+    image_path = f"./image/{md_filename}"
+    image = cv2.imread(image_path)
+
+    img_data = cv2.imencode(".jpg", image)[1]
+
+    files = {
+        'image': ('a.jpg', img_data.tobytes(), 'image/jpg', {'Expires': '0'})
+    }   
+
+    dp_res = requests.post("http://49.50.163.219:30004/densepose/",
+                        files=files)
+
+    with open('data/test/image-densepose/denpose.jpg', 'wb') as f:
+        f.write(dp_res.content)
+
+# [humanparse] Server
+async def humanparse(md_filename):
+    print("start : humanparse")
+    image_path = f"./image/{md_filename}"
+    image = cv2.imread(image_path)
+    img_data = cv2.imencode(".jpg", image)[1]
+
+    files = {
+        'image': ('a.jpg', img_data.tobytes(), 'image/jpg', {'Expires': '0'})
+    }   
+
+    hp_res = requests.post("http://49.50.163.219:30005/human-parse/",
+                        files=files)
+
+    with open('data/test/image-parse-v3/humanparse.jpg', 'wb') as f:
+        f.write(hp_res.content)
+
+# [Openpose]
+async def openpose(md_filename):
+    print("start : openpose")
+    image_path = f"./image/{md_filename}"
+    image = cv2.imread(image_path)
+    img_data = cv2.imencode(".jpg", image)[1]
+
+    files = {
+        'image': ('a.jpg', img_data.tobytes(), 'image/jpg', {'Expires': '0'})
+    }   
+
+    dp_res = requests.post("http://49.50.163.219:30006/openpose-img/",
+                        files=files)
+    json_res = requests.post("http://49.50.163.219:30006/openpose-json/",
+                        files=files)
+    
+    json_data = json_res.content.decode("utf-8")
+    
+    decoded_data = json.loads(json_data)
+
+    with open('data/test/openpose_img/openpose.jpg', 'wb') as f:
+        f.write(dp_res.content)
+    
+    # json_path = os.path.join('openpose-json', model_image_name.replace('.jpg', '.json'))
+    with open('data/test/openpose_json/openpose.json', "w") as outfile:
+        json.dump(decoded_data, outfile)
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 # 다른 Server
 # TODO : get - 서버에 저장되어있는 원본 이미지 불러오기
-# @app.post('/upload_openpose', description="OpenPose")
-# async def upload_openpose(file: UploadFile = File(...)) :
-
-#     UPLOAD_DIR = ""  # 이미지를 저장할 서버 경로
-#     id = str(uuid4())
-
-#     cloth_content = await cloth_file.read()
-#     cloth_filename = f"{id}_cloth.jpg"  # uuid로 유니크한 파일명으로 변경
-#     with open(os.path.join(UPLOAD_DIR, cloth_filename), "wb") as fp:
-#         fp.write(cloth_content)  # 서버 로컬 스토리지에 이미지 저장 (쓰기)
-
-#     return {"id": id,
-#             "image": cloth_filename}
-
-# @app.post('/upload_humanparsing', description="HumanParsing")
-# async def upload_humanparsing(file: UploadFile = File(...)) :
-
-#     UPLOAD_DIR = ""  # 이미지를 저장할 서버 경로
-#     id = str(uuid4())
-
-#     cloth_content = await cloth_file.read()
-#     cloth_filename = f"{id}_cloth.jpg"  # uuid로 유니크한 파일명으로 변경
-#     with open(os.path.join(UPLOAD_DIR, cloth_filename), "wb") as fp:
-#         fp.write(cloth_content)  # 서버 로컬 스토리지에 이미지 저장 (쓰기)
-
-#     return {"id": id,
-#             "image": cloth_filename}
-
-# @app.post('/upload_densepose', description="DensePose")
-# async def upload_densepose(file: UploadFile = File(...)) :
-
-#     UPLOAD_DIR = ""  # 이미지를 저장할 서버 경로
-#     id = str(uuid4())
-
-#     cloth_content = await cloth_file.read()
-#     cloth_filename = f"{id}_cloth.jpg"  # uuid로 유니크한 파일명으로 변경
-#     with open(os.path.join(UPLOAD_DIR, cloth_filename), "wb") as fp:
-#         fp.write(cloth_content)  # 서버 로컬 스토리지에 이미지 저장 (쓰기)
-
-#     return {"id": id,
-#             "image": cloth_filename}
-
-
 @app.get('/upload_clothmask', description="ClothMask")
 async def upload_clothmask() :
                         #    cloth_file : UploadFile = File(...)) :
