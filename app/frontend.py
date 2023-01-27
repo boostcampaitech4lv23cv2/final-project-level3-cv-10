@@ -6,6 +6,7 @@ from PIL import Image
 import requests
 import torch.nn as nn
 from pyparsing import empty
+import asyncio
 
 def main():
     # Normal

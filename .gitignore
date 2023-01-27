@@ -14,6 +14,7 @@ poetry.lock
 pyproject.toml
 requirements_V1.txt
 static/
+*.jpg
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -5,7 +5,7 @@ import yaml
 from typing import Tuple
 
 import sys
-sys.path.append('/opt/ml/input/VTO/appv1')
+sys.path.append('/opt/ml/input/VTO')
 from HR_VITON.networks import ConditionGenerator, load_checkpoint, make_grid
 import torchgeometry as tgm
 import os
@@ -163,8 +163,8 @@ def get_prediction(opt ,test_loader, tocg, generator, id) :
                 
             # save output
             save_images(output, unpaired_names, output_dir)
-            img = Image.open(output_dir + '/' + unpaired_names[0])
-            st.image(img)
+            # img = Image.open(output_dir + '/' + unpaired_names[0])
+            # st.image(img)
             print(f"Test time {time.time() - iter_start_time}")
 
 

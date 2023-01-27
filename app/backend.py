@@ -10,6 +10,8 @@ import secrets
 import argparse
 import torch
 import torch.nn as nn
+import sys
+sys.path.append('/opt/ml/input/VTO')
 from HR_VITON.networks import ConditionGenerator, load_checkpoint, make_grid
 from HR_VITON.network_generator import SPADEGenerator
 from HR_VITON.cp_dataset_test import CPDatasetTest, CPDataLoader
@@ -20,6 +22,9 @@ import io
 from fastapi.responses import FileResponse
 from predict import get_prediction
 # from .model import MyEfficientNet, get_model, get_config, predict_from_image_byte
+import time
+import asyncio
+from urllib.request import urlopen
 
 # yj
 import cv2 
@@ -129,7 +134,6 @@ def get_opt():
     parser.add_argument('--cloth', default='13172_00.jpg')
     opt = parser.parse_args()
     return opt
-
 def load_checkpoint_G(model, checkpoint_path,opt):
     if not os.path.exists(checkpoint_path):
         print("Invalid path!")
@@ -193,18 +197,25 @@ async def upload_md(md_file: UploadFile = File(...),
     with open(os.path.join(UPLOAD_DIR, cloth_filename), "wb") as fp:
         fp.write(cloth_content)  # 서버 로컬 스토리지에 이미지 저장 (쓰기)
 
-    original2mask(cloth_filename)
-
+    start_time = time.time() 
+    await main(cloth_filename)
+    print(f"End time {time.time() - start_time}")
+    
     return {"id": id,
             "md_filename": md_filename,
             "cloth_filename": cloth_filename}
 
+async def main(cloth_filename) :
+    await asyncio.gather(original2refocus(cloth_filename),
+                         original2mask(cloth_filename))
+
+    # await original2refocus(cloth_filename)
+    # await original2mask(cloth_filename)
+
 # [cloth_mask] Server
-def original2refocus(cloth_filename):
-    # original cloth to refocus cloth
+async def original2refocus(cloth_filename):
     image_path = f"./image/{cloth_filename}"
     image = cv2.imread(image_path)
-
     img_data = cv2.imencode(".jpg", image)[1]
 
     files = {
@@ -225,10 +236,9 @@ def original2refocus(cloth_filename):
     refocus_img.save(refocus_path)
 
 # refocus cloth to mask
-def original2mask(cloth_filename):
+async def original2mask(cloth_filename):
     refocus_path = f"./image/{cloth_filename}"
     refocus_image = cv2.imread(refocus_path)
-
     refocus_data = cv2.imencode(".jpg", refocus_image)[1]
 
     files = {
@@ -236,18 +246,17 @@ def original2mask(cloth_filename):
     }  
     mask_res  = requests.post("http://49.50.163.219:30003/cloth-mask/",
                      files=files)
-    print(mask_res)
 
-    mask_data = mask_res.content
+    with open('image.jpg', 'wb') as f:
+        f.write(mask_res.content)
 
-    mask_nparr = np.frombuffer(mask_data, np.uint8)
-    mask_img = cv2.imdecode(mask_nparr, cv2.IMREAD_COLOR)
-    
-    # save image to file
-    mask_img_file = Image.fromarray(mask_img)
-
-    mask_path = os.path.join('mask', cloth_filename)
-    mask_img_file.save(mask_path)
+    # mask_data = mask_res.content
+    # mask_nparr = np.frombuffer(mask_data, np.uint8)
+    # mask_img = cv2.imdecode(mask_nparr, cv2.IMREAD_COLOR)
+    # # save image to file
+    # mask_img_file = Image.fromarray(mask_img)
+    # mask_path = os.path.join('mask', cloth_filename)
+    # mask_img_file.save(mask_path)
 
 # 다른 Server
 # TODO : get - 서버에 저장되어있는 원본 이미지 불러오기
