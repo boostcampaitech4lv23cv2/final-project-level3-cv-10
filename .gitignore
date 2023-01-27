@@ -1,9 +1,19 @@
-data
-image
-Output
-mask
-__pycache__
-utils
+**/data
+**/image
+**/Output/
+**/mask/
+**/__pycache__
+**/utils
+**/output
+
+**/eval_models/weights
+
+app_test/
+assets/
+poetry.lock
+pyproject.toml
+requirements_V1.txt
+static/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

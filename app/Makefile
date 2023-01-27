@@ -5,7 +5,7 @@ run_server:
 	python3 -m app
 
 run_client:
-	python3 -m streamlit run app/frontend.py --server.fileWatcherType none
+	python3 -m streamlit run frontend.py --server.fileWatcherType none --server.port 30002
 
 run_app: run_server run_client
 
