@@ -203,13 +203,13 @@ async def upload_md(md_file: UploadFile = File(...),
     print("Start")
     # await main(cloth_filename, md_filename)
     # async with aiohttp.ClientSession() as sess:           
-    await asyncio.gather(original2refocus(cloth_filename),  
-                        #  densepose(md_filename),
-                        #  humanparse(md_filename),
-                        openpose(md_filename),
-                        original2mask(cloth_filename),
-                        )
-
+    # await asyncio.gather(original2refocus(cloth_filename),  
+    #                     #  densepose(md_filename),
+    #                     #  humanparse(md_filename),
+    #                     openpose(md_filename),
+    #                     original2mask(cloth_filename),
+    #                     )
+    await openpose(md_filename)
     # get_im_parse_agnostic
     print(f"End time {time.time() - start_time}")
     

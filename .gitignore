@@ -10,8 +10,8 @@
 
 app_test/
 assets/
-poetry.lock
-pyproject.toml
+# poetry.lock
+# pyproject.toml
 requirements_V1.txt
 static/
 *.jpg
