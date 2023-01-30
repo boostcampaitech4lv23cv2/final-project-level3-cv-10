@@ -201,7 +201,7 @@ async def upload_md(md_file: UploadFile = File(...),
 
     start_time = time.time() 
     print("Start")
-    # await main(cloth_filename, md_filename)
+    await main(cloth_filename, md_filename)
     # async with aiohttp.ClientSession() as sess:           
     # await asyncio.gather(original2refocus(cloth_filename),  
     #                     #  densepose(md_filename),
@@ -210,7 +210,7 @@ async def upload_md(md_file: UploadFile = File(...),
     #                     original2mask(cloth_filename),
     #                     )
     # await openpose(md_filename)
-    await densepose(md_filename)
+    # await densepose(md_filename)
     # get_im_parse_agnostic
     print(f"End time {time.time() - start_time}")
     
@@ -218,13 +218,13 @@ async def upload_md(md_file: UploadFile = File(...),
             "md_filename": md_filename,
             "cloth_filename": cloth_filename}
 
-# async def main(cloth_filename, md_filename) :
-#     await asyncio.gather(original2refocus(cloth_filename),
-                        #  densepose(md_filename),
-                        #  humanparse(md_filename),
-                        # openpose(md_filename),
-                        # original2mask(cloth_filename),
-                        # )
+async def main(cloth_filename, md_filename) :
+    await asyncio.gather(original2refocus(cloth_filename),
+                         densepose(md_filename),
+                         humanparse(md_filename),
+                        openpose(md_filename),
+                        original2mask(cloth_filename),
+                        )
 
     # await original2refocus(cloth_filename)
     # await original2mask(cloth_filename)
@@ -330,15 +330,22 @@ async def openpose(md_filename):
     json_res = requests.post("http://49.50.163.219:30006/openpose-json/",
                         files=files)
     
+    dp_data = dp_res.content
     json_data = json_res.content.decode("utf-8")
     
     decoded_data = json.loads(json_data)
-
-    with open('data/test/openpose_img/openpose.jpg', 'wb') as f:
-        f.write(dp_res.content)
     
-    # json_path = os.path.join('openpose-json', model_image_name.replace('.jpg', '.json'))
-    with open('data/test/openpose_json/openpose.json', "w") as outfile:
+    dp_nparr = np.frombuffer(dp_data, np.uint8)
+    dp_nparr = cv2.imdecode(dp_nparr, cv2.IMREAD_COLOR)
+
+    # save image to file
+    dp_img = Image.fromarray(dp_nparr)
+
+    dp_path = os.path.join('data/test/openpose_img', md_filename)
+    dp_img.save(dp_path)
+    
+    json_path = os.path.join('data/test/openpose_json', md_filename.replace('.jpg', '.json'))
+    with open(json_path, "w") as outfile:
         json.dump(decoded_data, outfile)
     
     print("End : openpose")
