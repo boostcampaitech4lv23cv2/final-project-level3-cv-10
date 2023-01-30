@@ -209,7 +209,8 @@ async def upload_md(md_file: UploadFile = File(...),
     #                     openpose(md_filename),
     #                     original2mask(cloth_filename),
     #                     )
-    await openpose(md_filename)
+    # await openpose(md_filename)
+    await densepose(md_filename)
     # get_im_parse_agnostic
     print(f"End time {time.time() - start_time}")
     
@@ -281,8 +282,17 @@ async def densepose(md_filename):
     dp_res = requests.post("http://49.50.163.219:30004/densepose/",
                         files=files)
 
-    with open('data/test/image-densepose/denpose.jpg', 'wb') as f:
-        f.write(dp_res.content)
+    dp_data = dp_res.content
+    
+    dp_nparr = np.frombuffer(dp_data, np.uint8)
+    dp_nparr = cv2.imdecode(dp_nparr, cv2.IMREAD_COLOR)
+
+    # save image to file
+    dp_img = Image.fromarray(dp_nparr)
+
+    dp_path = os.path.join('data/test/image-densepose', md_filename)
+    dp_img.save(dp_path)
+    
     print("End : densepose")
 
 # [humanparse] Server
