@@ -27,7 +27,7 @@ import time
 import asyncio
 from urllib.request import urlopen
 import json
-
+import aiohttp
 # yj
 import cv2 
 import requests
@@ -201,7 +201,15 @@ async def upload_md(md_file: UploadFile = File(...),
 
     start_time = time.time() 
     print("Start")
-    await main(cloth_filename, md_filename)
+    # await main(cloth_filename, md_filename)
+    # async with aiohttp.ClientSession() as sess:           
+    await asyncio.gather(original2refocus(cloth_filename),  
+                        #  densepose(md_filename),
+                        #  humanparse(md_filename),
+                        openpose(md_filename),
+                        original2mask(cloth_filename),
+                        )
+
     # get_im_parse_agnostic
     print(f"End time {time.time() - start_time}")
     
@@ -209,20 +217,22 @@ async def upload_md(md_file: UploadFile = File(...),
             "md_filename": md_filename,
             "cloth_filename": cloth_filename}
 
-async def main(cloth_filename, md_filename) :
-    await asyncio.gather(#original2refocus(cloth_filename),
-                        #  original2mask(cloth_filename),
+# async def main(cloth_filename, md_filename) :
+#     await asyncio.gather(original2refocus(cloth_filename),
                         #  densepose(md_filename),
                         #  humanparse(md_filename),
-                         openpose(md_filename)
-                        )
+                        # openpose(md_filename),
+                        # original2mask(cloth_filename),
+                        # )
 
     # await original2refocus(cloth_filename)
     # await original2mask(cloth_filename)
 
 # [cloth_mask] Server
 async def original2refocus(cloth_filename):
-    print("start : original2refocus")
+    print("Start : original2refocus")
+    # await asyncio.sleep(5)
+
     image_path = f"./image/{cloth_filename}"
     image = cv2.imread(image_path)
     img_data = cv2.imencode(".jpg", image)[1]
@@ -231,33 +241,37 @@ async def original2refocus(cloth_filename):
         'image': ('a.jpg', img_data.tobytes(), 'image/jpg', {'Expires': '0'})
     }   
 
+    # data = open(image_path, 'rb')
+
     refocus_res = requests.post("http://49.50.163.219:30003/refocus/",
                         files=files)
 
     with open('data/test/cloth/cloth.jpg', 'wb') as f:
         f.write(refocus_res.content)
+    print("End : original2refocus")
 
 async def original2mask(cloth_filename):
-    print("start : original2mask")
+    print("Start : original2mask")
+
     refocus_path = f"./image/{cloth_filename}"
     refocus_image = cv2.imread(refocus_path)
     refocus_data = cv2.imencode(".jpg", refocus_image)[1]
 
     files = {
         'image': ('a.jpg', refocus_data.tobytes(), 'image/jpg', {'Expires': '0'})
-    }  
+    }
     mask_res  = requests.post("http://49.50.163.219:30003/cloth-mask/",
-                     files=files)
+                    files=files)
 
     with open('data/test/cloth_mask/cloth_mask.jpg', 'wb') as f:
         f.write(mask_res.content)
+    print("End : original2mask")
 
 # [densepose] Server
 async def densepose(md_filename):
-    print("start : densepose")
+    print("Start : densepose")
     image_path = f"./image/{md_filename}"
     image = cv2.imread(image_path)
-
     img_data = cv2.imencode(".jpg", image)[1]
 
     files = {
@@ -269,10 +283,11 @@ async def densepose(md_filename):
 
     with open('data/test/image-densepose/denpose.jpg', 'wb') as f:
         f.write(dp_res.content)
+    print("End : densepose")
 
 # [humanparse] Server
 async def humanparse(md_filename):
-    print("start : humanparse")
+    print("Start : humanparse")
     image_path = f"./image/{md_filename}"
     image = cv2.imread(image_path)
     img_data = cv2.imencode(".jpg", image)[1]
@@ -286,10 +301,12 @@ async def humanparse(md_filename):
 
     with open('data/test/image-parse-v3/humanparse.jpg', 'wb') as f:
         f.write(hp_res.content)
+    print("End : humanparse")
 
 # [Openpose]
 async def openpose(md_filename):
-    print("start : openpose")
+    print("Start : openpose")
+    
     image_path = f"./image/{md_filename}"
     image = cv2.imread(image_path)
     img_data = cv2.imencode(".jpg", image)[1]
@@ -314,7 +331,7 @@ async def openpose(md_filename):
     with open('data/test/openpose_json/openpose.json', "w") as outfile:
         json.dump(decoded_data, outfile)
     
-
+    print("End : openpose")
 
 
 
