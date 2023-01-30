@@ -28,6 +28,7 @@ import asyncio
 from urllib.request import urlopen
 import json
 import aiohttp
+import subprocess
 # yj
 import cv2 
 import requests
@@ -186,13 +187,20 @@ def get_image(id:str):
 async def upload_md(md_file: UploadFile = File(...),
                     cloth_file: UploadFile = File(...)):
 
-    UPLOAD_DIR = "./image"  # 이미지를 저장할 서버 경로
+    UPLOAD_DIR = "./image/"  # 이미지를 저장할 서버 경로
     id = str(uuid4())
     
-    md_content = await md_file.read()
+    # md_content = await md_file.read()
+
+    contents = await md_file.read()
+    pil_image = Image.open(io.BytesIO(contents))
+
+    # resize image to expected input shape
+    pil_image = pil_image.resize((768, 1024))
     md_filename = f"{id}_md.jpg"  # uuid로 유니크한 파일명으로 변경
-    with open(os.path.join(UPLOAD_DIR, md_filename), "wb") as fp:
-        fp.write(md_content)  # 서버 로컬 스토리지에 이미지 저장 (쓰기)
+    pil_image.save(f"{UPLOAD_DIR}{id}_md.jpg")
+    # with open(os.path.join(UPLOAD_DIR, md_filename), "wb") as fp:
+    #     fp.write(pil_image)  # 서버 로컬 스토리지에 이미지 저장 (쓰기)
 
     cloth_content = await cloth_file.read()
     cloth_filename = f"{id}_cloth.jpg"  # uuid로 유니크한 파일명으로 변경
@@ -201,18 +209,17 @@ async def upload_md(md_file: UploadFile = File(...),
 
     start_time = time.time() 
     print("Start")
-    await main(cloth_filename, md_filename)
+    # await main(cloth_filename, md_filename)
     # async with aiohttp.ClientSession() as sess:           
-    # await asyncio.gather(original2refocus(cloth_filename),  
-    #                     #  densepose(md_filename),
-    #                     #  humanparse(md_filename),
-    #                     openpose(md_filename),
-    #                     original2mask(cloth_filename),
-    #                     )
-    # await openpose(md_filename)
-    # await humanparse(md_filename)
-    # await densepose(md_filename)
-    # get_im_parse_agnostic
+    await asyncio.gather(#original2refocus(cloth_filename),  
+                        #  densepose(md_filename),
+                        #  humanparse(md_filename),
+                        openpose(md_filename),
+                        # original2mask(cloth_filename),
+                        )
+
+    output = subprocess.getoutput("./HR_VITON/get_parse_agnostic.py")
+
     print(f"End time {time.time() - start_time}")
     
     return {"id": id,
@@ -220,11 +227,11 @@ async def upload_md(md_file: UploadFile = File(...),
             "cloth_filename": cloth_filename}
 
 async def main(cloth_filename, md_filename) :
-    await asyncio.gather(humanparse(md_filename),
-                        original2refocus(cloth_filename),
-                        densepose(md_filename),
-                        # openpose(md_filename),
-                        original2mask(cloth_filename),
+    await asyncio.gather(original2refocus(cloth_filename),
+                         densepose(md_filename),
+                         humanparse(md_filename),
+                         openpose(md_filename),
+                         original2mask(cloth_filename),
                         )
 
     # await original2refocus(cloth_filename)
@@ -359,7 +366,6 @@ async def openpose(md_filename):
 
     # save image to file
     dp_img = Image.fromarray(dp_nparr)
-
     dp_path = os.path.join('data/test/openpose_img', md_filename)
     dp_img.save(dp_path)
     
@@ -415,3 +421,6 @@ async def upload_clothmask() :
     #         "image": cloth_filename}
 
 # TODO : post - Inference한 이미지 서버에 저장
+
+
+# 사이즈 1024,768 model이미지 변경하고 전달 -> image 폴더안에
