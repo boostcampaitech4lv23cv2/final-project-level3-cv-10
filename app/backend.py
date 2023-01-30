@@ -210,6 +210,7 @@ async def upload_md(md_file: UploadFile = File(...),
     #                     original2mask(cloth_filename),
     #                     )
     # await openpose(md_filename)
+    # await humanparse(md_filename)
     # await densepose(md_filename)
     # get_im_parse_agnostic
     print(f"End time {time.time() - start_time}")
@@ -219,10 +220,10 @@ async def upload_md(md_file: UploadFile = File(...),
             "cloth_filename": cloth_filename}
 
 async def main(cloth_filename, md_filename) :
-    await asyncio.gather(original2refocus(cloth_filename),
-                         densepose(md_filename),
-                         humanparse(md_filename),
-                        openpose(md_filename),
+    await asyncio.gather(humanparse(md_filename),
+                        original2refocus(cloth_filename),
+                        densepose(md_filename),
+                        # openpose(md_filename),
                         original2mask(cloth_filename),
                         )
 
@@ -247,8 +248,17 @@ async def original2refocus(cloth_filename):
     refocus_res = requests.post("http://49.50.163.219:30003/refocus/",
                         files=files)
 
-    with open('data/test/cloth/cloth.jpg', 'wb') as f:
-        f.write(refocus_res.content)
+    refocus_data = refocus_res.content
+
+    refocus_nparr = np.frombuffer(refocus_data, np.uint8)
+    refocus_img = cv2.imdecode(refocus_nparr, cv2.IMREAD_COLOR)
+    # save image to file
+    refocus_img = Image.fromarray(refocus_img)
+
+    refocus_path = os.path.join('data/test/cloth', cloth_filename)
+    refocus_img.save(refocus_path)
+    # with open('data/test/cloth/cloth.jpg', 'wb') as f:
+    #     f.write(refocus_res.content)
     print("End : original2refocus")
 
 async def original2mask(cloth_filename):
@@ -264,7 +274,7 @@ async def original2mask(cloth_filename):
     mask_res  = requests.post("http://49.50.163.219:30003/cloth-mask/",
                     files=files)
 
-    with open('data/test/cloth_mask/cloth_mask.jpg', 'wb') as f:
+    with open(f'data/test/cloth_mask/{cloth_filename}', 'wb') as f:
         f.write(mask_res.content)
     print("End : original2mask")
 
@@ -308,9 +318,18 @@ async def humanparse(md_filename):
 
     hp_res = requests.post("http://49.50.163.219:30005/human-parse/",
                         files=files)
+    hp_data = hp_res.content
+    
+    hp_nparr = np.frombuffer(hp_data, np.uint8)
+    hp_nparr = cv2.imdecode(hp_nparr, cv2.IMREAD_COLOR)
 
-    with open('data/test/image-parse-v3/humanparse.jpg', 'wb') as f:
-        f.write(hp_res.content)
+    # save image to file
+    hp_img = Image.fromarray(hp_nparr)
+
+    hp_path = os.path.join('data/test/image-parse-v3', md_filename)
+    hp_img.save(hp_path)
+    # with open('data/test/image-parse-v3/humanparse.jpg', 'wb') as f:
+    #     f.write(hp_res.content)
     print("End : humanparse")
 
 # [Openpose]
