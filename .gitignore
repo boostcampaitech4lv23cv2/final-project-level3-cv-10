@@ -15,8 +15,8 @@ pyproject.toml
 requirements_V1.txt
 static/
 
-connect/create_hp/human_parse/
-connect/densepose/densepose_new/
+create_hp/human_parse/
+densepose/densepose_new/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
