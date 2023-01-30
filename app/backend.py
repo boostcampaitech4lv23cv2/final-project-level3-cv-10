@@ -187,91 +187,91 @@ def get_image(id:str):
 async def upload_md(md_file: UploadFile = File(...),
                     cloth_file: UploadFile = File(...)):
 
-    UPLOAD_DIR = "./image/"  # 이미지를 저장할 서버 경로
-    id = str(uuid4())
+    UPLOAD_DIR_MD = "./data/test/image"  # 이미지를 저장할 서버 경로
+    UPLOAD_DIR_CLOTH = "./data/test/cloth_base"  # 이미지를 저장할 서버 경로
+    # id = str(uuid4())
+    id = "243f8ecb-da60-47ea-ab3a-a7ffa7b062e3"
     
     # md_content = await md_file.read()
 
-    contents = await md_file.read()
-    pil_image = Image.open(io.BytesIO(contents))
+    md_content = await md_file.read()
+    # pil_image = Image.open(io.BytesIO(md_content))
 
     # resize image to expected input shape
-    pil_image = pil_image.resize((768, 1024))
-    md_filename = f"{id}_md.jpg"  # uuid로 유니크한 파일명으로 변경
-    pil_image.save(f"{UPLOAD_DIR}{id}_md.jpg")
-    # with open(os.path.join(UPLOAD_DIR, md_filename), "wb") as fp:
-    #     fp.write(pil_image)  # 서버 로컬 스토리지에 이미지 저장 (쓰기)
+    # pil_image = pil_image.resize((768, 1024))
+    # pil_image.save(f"{UPLOAD_DIR_MD}/{id}_md.jpg")
+    with open(os.path.join(UPLOAD_DIR_MD, f'{id}.jpg'), "wb") as fp:
+        fp.write(md_content)  # 서버 로컬 스토리지에 이미지 저장 (쓰기)
 
     cloth_content = await cloth_file.read()
-    cloth_filename = f"{id}_cloth.jpg"  # uuid로 유니크한 파일명으로 변경
-    with open(os.path.join(UPLOAD_DIR, cloth_filename), "wb") as fp:
+    # cloth_filename = f"{id}_cloth.jpg"  # uuid로 유니크한 파일명으로 변경
+    with open(os.path.join(UPLOAD_DIR_CLOTH, f'{id}.jpg'), "wb") as fp:
         fp.write(cloth_content)  # 서버 로컬 스토리지에 이미지 저장 (쓰기)
 
     start_time = time.time() 
     print("Start")
     # await main(cloth_filename, md_filename)
     # async with aiohttp.ClientSession() as sess:           
-    await asyncio.gather(#original2refocus(cloth_filename),  
-                        #  densepose(md_filename),
-                        #  humanparse(md_filename),
-                        openpose(md_filename),
-                        # original2mask(cloth_filename),
-                        )
-
-    output = subprocess.getoutput("./HR_VITON/get_parse_agnostic.py")
+    # await asyncio.gather(original2refocus(id),  
+    #                      densepose(id),
+    #                      humanparse(id),
+    #                      openpose(id),
+    #                      original2mask(id),
+    #                     )
+    
+    await original2refocus(id)
+    await densepose(id)
+    await humanparse(id)
+    await openpose(id)
+    await original2mask(id)
+                        
+    output = subprocess.getoutput("../HR_VITON/get_parse_agnostic.py")
+    print(output)
 
     print(f"End time {time.time() - start_time}")
     
-    return {"id": id,
-            "md_filename": md_filename,
-            "cloth_filename": cloth_filename}
+    return {"id": id}
 
-async def main(cloth_filename, md_filename) :
-    await asyncio.gather(original2refocus(cloth_filename),
-                         densepose(md_filename),
-                         humanparse(md_filename),
-                         openpose(md_filename),
-                         original2mask(cloth_filename),
-                        )
-
-    # await original2refocus(cloth_filename)
-    # await original2mask(cloth_filename)
+# async def main(cloth_filename, md_filename) :
+#     await asyncio.gather(original2refocus(id),
+#                          densepose(id),
+#                          humanparse(id),
+#                          openpose(id),
+#                          original2mask(id),
+#                         )
 
 # [cloth_mask] Server
-async def original2refocus(cloth_filename):
+async def original2refocus(id):
     print("Start : original2refocus")
     # await asyncio.sleep(5)
-
-    image_path = f"./image/{cloth_filename}"
+    image_path = f"./data/test/cloth_base/{id}.jpg"
     image = cv2.imread(image_path)
     img_data = cv2.imencode(".jpg", image)[1]
 
     files = {
         'image': ('a.jpg', img_data.tobytes(), 'image/jpg', {'Expires': '0'})
     }   
-
-    # data = open(image_path, 'rb')
-
+    
     refocus_res = requests.post("http://49.50.163.219:30003/refocus/",
                         files=files)
 
     refocus_data = refocus_res.content
-
     refocus_nparr = np.frombuffer(refocus_data, np.uint8)
     refocus_img = cv2.imdecode(refocus_nparr, cv2.IMREAD_COLOR)
+
     # save image to file
     refocus_img = Image.fromarray(refocus_img)
-
-    refocus_path = os.path.join('data/test/cloth', cloth_filename)
+    refocus_path = os.path.join('data/test/cloth', f"{id}.jpg")
     refocus_img.save(refocus_path)
+
     # with open('data/test/cloth/cloth.jpg', 'wb') as f:
     #     f.write(refocus_res.content)
     print("End : original2refocus")
 
-async def original2mask(cloth_filename):
+async def original2mask(id):
     print("Start : original2mask")
 
-    refocus_path = f"./image/{cloth_filename}"
+    refocus_path = f"./data/test/cloth_base/{id}.jpg"
     refocus_image = cv2.imread(refocus_path)
     refocus_data = cv2.imencode(".jpg", refocus_image)[1]
 
@@ -281,14 +281,14 @@ async def original2mask(cloth_filename):
     mask_res  = requests.post("http://49.50.163.219:30003/cloth-mask/",
                     files=files)
 
-    with open(f'data/test/cloth_mask/{cloth_filename}', 'wb') as f:
+    with open(f'data/test/cloth_mask/{id}.jpg', 'wb') as f:
         f.write(mask_res.content)
     print("End : original2mask")
 
 # [densepose] Server
-async def densepose(md_filename):
+async def densepose(id):
     print("Start : densepose")
-    image_path = f"./image/{md_filename}"
+    image_path = f"./data/test/image/{id}.jpg"
     image = cv2.imread(image_path)
     img_data = cv2.imencode(".jpg", image)[1]
 
@@ -300,22 +300,20 @@ async def densepose(md_filename):
                         files=files)
 
     dp_data = dp_res.content
-    
     dp_nparr = np.frombuffer(dp_data, np.uint8)
     dp_nparr = cv2.imdecode(dp_nparr, cv2.IMREAD_COLOR)
 
     # save image to file
     dp_img = Image.fromarray(dp_nparr)
-
-    dp_path = os.path.join('data/test/image-densepose', md_filename)
+    dp_path = os.path.join('data/test/image-densepose', f"{id}.jpg")
     dp_img.save(dp_path)
     
     print("End : densepose")
 
 # [humanparse] Server
-async def humanparse(md_filename):
+async def humanparse(id):
     print("Start : humanparse")
-    image_path = f"./image/{md_filename}"
+    image_path = f"./data/test/image/{id}.jpg"
     image = cv2.imread(image_path)
     img_data = cv2.imencode(".jpg", image)[1]
 
@@ -326,24 +324,23 @@ async def humanparse(md_filename):
     hp_res = requests.post("http://49.50.163.219:30005/human-parse/",
                         files=files)
     hp_data = hp_res.content
-    
     hp_nparr = np.frombuffer(hp_data, np.uint8)
     hp_nparr = cv2.imdecode(hp_nparr, cv2.IMREAD_COLOR)
 
     # save image to file
     hp_img = Image.fromarray(hp_nparr)
-
-    hp_path = os.path.join('data/test/image-parse-v3', md_filename)
+    hp_path = os.path.join('data/test/image-parse-v3', f"{id}.jpg")
     hp_img.save(hp_path)
+
     # with open('data/test/image-parse-v3/humanparse.jpg', 'wb') as f:
     #     f.write(hp_res.content)
     print("End : humanparse")
 
 # [Openpose]
-async def openpose(md_filename):
+async def openpose(id):
     print("Start : openpose")
     
-    image_path = f"./image/{md_filename}"
+    image_path = f"./data/test/image/{id}.jpg"
     image = cv2.imread(image_path)
     img_data = cv2.imencode(".jpg", image)[1]
 
@@ -366,10 +363,10 @@ async def openpose(md_filename):
 
     # save image to file
     dp_img = Image.fromarray(dp_nparr)
-    dp_path = os.path.join('data/test/openpose_img', md_filename)
+    dp_path = os.path.join('data/test/openpose_img', f"{id}.jpg")
     dp_img.save(dp_path)
     
-    json_path = os.path.join('data/test/openpose_json', md_filename.replace('.jpg', '.json'))
+    json_path = os.path.join('data/test/openpose_json', f"{id}.jpg".replace('.jpg', '.json'))
     with open(json_path, "w") as outfile:
         json.dump(decoded_data, outfile)
     
