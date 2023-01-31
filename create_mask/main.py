@@ -18,8 +18,6 @@ app = FastAPI()
 async def create_file(
     image: bytes = File(...),
 ):
-    await asyncio.sleep(1)
-    print('test1')
     img = Image.open(io.BytesIO(image))
     refocus_img = get_refocus_image_mask(img)[0]
     nparr_data = np.asarray(refocus_img)
@@ -31,8 +29,6 @@ async def create_file(
 async def create_file(
     image: bytes = File(...),
 ):
-    await asyncio.sleep(1)
-    print('test2')
     img = Image.open(io.BytesIO(image))
     cloth_mask = get_refocus_image_mask(img)[1]
     nparr_data = np.asarray(cloth_mask)

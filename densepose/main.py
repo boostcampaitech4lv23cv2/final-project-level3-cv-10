@@ -21,18 +21,19 @@ async def create_file(
     os.makedirs("./data/densepose_output", exist_ok=True)
     
     id_2_str = str(uuid4())
-    model_path = f"/opt/ml/Final_Project/connect/data/model_image/{id_2_str}.jpg"
-    output_path = f"/opt/ml/Final_Project/connect/data/densepose_output/{id_2_str}.jpg"
+    model_path = f"/opt/ml/Final_Project/data/model_image/{id_2_str}.jpg"
+    output_path = f"/opt/ml/Final_Project/data/densepose_output/{id_2_str}.jpg"
+    output_folder = "/opt/ml/Final_Project/data/densepose_output"
     
     img.save(model_path)
-    # img.save(output_path)
+    print(f"model image saved to {model_path}")
     
     output = subprocess.getoutput(f"python densepose/densepose_new/create_Densepose.py dump \
-        --cfg '/opt/ml/Final_Project/connect/densepose/densepose_new/DensePose/configs/densepose_rcnn_R_101_FPN_DL_s1x.yaml' \
+        --cfg '/opt/ml/Final_Project/densepose/densepose_new/DensePose/configs/densepose_rcnn_R_101_FPN_DL_s1x.yaml' \
         --model 'https://dl.fbaipublicfiles.com/densepose/densepose_rcnn_R_101_FPN_DL_s1x/165712116/model_final_844d15.pkl' \
         --input {model_path} --output {output_path}")
     
-    # print(output)
+    print(output)
     
     # get image from ./data/densepose_output
     densePose_img = Image.open(output_path)
@@ -41,7 +42,7 @@ async def create_file(
     data = cv2.imencode(".jpeg", nparr_data)[1]
     data = data.tobytes()
     
-    # os.remove(model_path)
-    # os.remove(output_path)
+    os.remove(model_path)
+    os.remove(output_path)
     
     return Response(data, media_type="image/jpg")

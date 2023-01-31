@@ -105,7 +105,7 @@ def get_args():
 def get_refocus_image_mask(input_img):
     pad_h_top, pad_h_bottom, pad_w_left, pad_w_right = 50, 50, 50, 50
     resize_size = (1024, 768)
-    interface = HiInterface(object_type="hairs-like",  # Can be "object" or "hairs-like".
+    interface = HiInterface(object_type="object",  # Can be "object" or "hairs-like".
         batch_size_seg=5,
         batch_size_matting=1,
         device='cuda' if torch.cuda.is_available() else 'cpu',

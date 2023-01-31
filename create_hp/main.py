@@ -8,7 +8,7 @@ import io
 import cv2, os, glob 
 import numpy as np 
 from uuid import UUID, uuid4
-import subprocess
+import subprocess, shutil
 
 app = FastAPI()
 
@@ -17,18 +17,18 @@ def create_file(
     image: bytes = File(...),
 ):
     img = Image.open(io.BytesIO(image))
-    os.makedirs("./data/model_image", exist_ok=True)
-    os.makedirs("./data/humanparse_output", exist_ok=True)
     
-    id_2_str = str(uuid4())
-    model_path = f"/opt/ml/Final_Project/connect/data/model_image/{id_2_str}.jpg"
-    output_path = f"/opt/ml/Final_Project/connect/data/humanparse_output/{id_2_str}.jpg"
+    id_2_str = str(uuid4())    
+    model_folder = os.path.join("/opt/ml/Final_Project/data/model_image", id_2_str)
+    output_folder = os.path.join("/opt/ml/Final_Project/data/humanparse_output", id_2_str)
+    os.makedirs(model_folder)
+    os.makedirs(output_folder)
     
-    model_folder = "/opt/ml/Final_Project/connect/data/model_image"
-    output_folder = "/opt/ml/Final_Project/connect/data/humanparse_output"
+    model_path = os.path.join(model_folder, "model.jpg")
+    output_path = os.path.join(output_folder, "model.png")
     
     img.save(model_path)
-    
+    print("human parse start")
     output = subprocess.getoutput(f"python create_hp/human_parse/inf_png.py \
         -i {model_folder} -o {output_folder}")
     
@@ -36,10 +36,10 @@ def create_file(
     densePose_img = Image.open(output_path)
     
     nparr_data = np.asarray(densePose_img)
-    data = cv2.imencode(".jpeg", nparr_data)[1]
+    data = cv2.imencode(".png", nparr_data)[1]
     data = data.tobytes()
     
-    os.remove(model_path)
-    os.remove(output_path)
+    shutil.rmtree(model_folder, ignore_errors=True)
+    shutil.rmtree(output_folder, ignore_errors=True)
     
-    return Response(data, media_type="image/jpg")
+    return Response(data, media_type="image/png")

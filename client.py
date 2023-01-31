@@ -45,7 +45,7 @@ def original2mask(image_name):
     mask_data = mask_res.content
 
     mask_nparr = np.frombuffer(mask_data, np.uint8)
-    mask_img = cv2.imdecode(mask_nparr, cv2.IMREAD_COLOR)
+    mask_img = cv2.imdecode(mask_nparr, cv2.IMREAD_UNCHANGED)
     
     # save image to file
     mask_img_file = Image.fromarray(mask_img)
@@ -94,7 +94,7 @@ def model2humanparse(model_image_name):
     dp_data = dp_res.content
     
     dp_nparr = np.frombuffer(dp_data, np.uint8)
-    dp_nparr = cv2.imdecode(dp_nparr, cv2.IMREAD_COLOR)
+    dp_nparr = cv2.imdecode(dp_nparr, cv2.IMREAD_UNCHANGED)
 
     # save image to file
     dp_img = Image.fromarray(dp_nparr)
@@ -147,7 +147,7 @@ if __name__ == "__main__":
     # model2humanparse(model_image_name)
     # original2refocus(image_name)
     # original2mask(image_name)
-    # model2densepose(model_image_name)
+    model2densepose(model_image_name)
     model2openpose(model_image_name)
 
     # humanparse가 끝나기 전에 다른 함수 clear
