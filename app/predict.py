@@ -23,7 +23,7 @@ def remove_overlap(seg_out, warped_cm):
     warped_cm = warped_cm - (torch.cat([seg_out[:, 1:3, :, :], seg_out[:, 5:, :, :]], dim=1)).sum(dim=1, keepdim=True) * warped_cm
     return warped_cm
 
-def get_prediction(opt ,test_loader, tocg, generator, id) :
+def get_prediction(opt ,test_loader, tocg, generator) :
     gauss = tgm.image.GaussianBlur((15, 15), (3, 3))
     if opt.cuda:
         gauss = gauss.cuda()
@@ -35,14 +35,14 @@ def get_prediction(opt ,test_loader, tocg, generator, id) :
     generator.eval()
     
     # if opt.output_dir is not None:
-    output_dir = opt.output_dir
-    # else:
-    #     output_dir = os.path.join('./output', opt.test_name,
-    #                         opt.datamode, opt.datasetting, 'generator', 'output')
-    # grid_dir = os.path.join('./output', opt.test_name,
-    #                          opt.datamode, opt.datasetting, 'generator', 'grid')
+    #     output_dir = opt.output_dir
+    # else :
+    output_dir = os.path.join('./output', opt.test_name,
+                        opt.datamode, opt.datasetting, 'generator', 'output')
+    grid_dir = os.path.join('./output', opt.test_name,
+                            opt.datamode, opt.datasetting, 'generator', 'grid')
     
-    # os.makedirs(grid_dir, exist_ok=True)
+    os.makedirs(grid_dir, exist_ok=True)
     os.makedirs(output_dir, exist_ok=True)
     
     num = 0
@@ -151,16 +151,18 @@ def get_prediction(opt ,test_loader, tocg, generator, id) :
             # visualize
             unpaired_names = []
             for i in range(shape[0]):
-                # grid = make_image_grid([(clothes[i].cpu() / 2 + 0.5), (pre_clothes_mask[i].cpu()).expand(3, -1, -1), visualize_segmap(parse_agnostic.cpu(), batch=i), ((densepose.cpu()[i]+1)/2),
-                #                         (warped_cloth[i].cpu().detach() / 2 + 0.5), (warped_clothmask[i].cpu().detach()).expand(3, -1, -1), visualize_segmap(fake_parse_gauss.cpu(), batch=i),
-                #                         (pose_map[i].cpu()/2 +0.5), (warped_cloth[i].cpu()/2 + 0.5), (agnostic[i].cpu()/2 + 0.5),
-                #                         (im[i]/2 +0.5), (output[i].cpu()/2 +0.5)],
-                #                         nrow=4)
-                # unpaired_name = (inputs['c_name']['paired'][i].split('.')[0] + '_' + inputs['c_name'][opt.datasetting][i].split('.')[0] + '.png')
-                unpaired_name = (id + '.png')
-                # save_image(grid, os.path.join(grid_dir, unpaired_name))
+                grid = make_image_grid([(clothes[i].cpu() / 2 + 0.5), (pre_clothes_mask[i].cpu()).expand(3, -1, -1), visualize_segmap(parse_agnostic.cpu(), batch=i), ((densepose.cpu()[i]+1)/2),
+                                        (warped_cloth[i].cpu().detach() / 2 + 0.5), (warped_clothmask[i].cpu().detach()).expand(3, -1, -1), visualize_segmap(fake_parse_gauss.cpu(), batch=i),
+                                        (pose_map[i].cpu()/2 +0.5), (warped_cloth[i].cpu()/2 + 0.5), (agnostic[i].cpu()/2 + 0.5),
+                                        (im[i]/2 +0.5), (output[i].cpu()/2 +0.5)],
+                                        nrow=4)
+                unpaired_name = (inputs['c_name']['paired'][i].split('.')[0] + '_' + inputs['c_name'][opt.datasetting][i].split('.')[0] + '.png')
+                save_image(grid, os.path.join(grid_dir, unpaired_name))
                 unpaired_names.append(unpaired_name)
-                
+            
+            new_unpaired_names = []
+            new_unpaired_name = (opt.id + '.png')
+            new_unpaired_names.append(new_unpaired_name)
             # save output
             save_images(output, unpaired_names, output_dir)
             # img = Image.open(output_dir + '/' + unpaired_names[0])

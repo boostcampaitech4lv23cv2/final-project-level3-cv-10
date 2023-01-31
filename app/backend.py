@@ -95,7 +95,7 @@ def get_opt():
     parser.add_argument('--cuda',default=True, help='cuda or cpu')
 
     parser.add_argument('--test_name', type=str, default='test', help='test name')
-    parser.add_argument("--dataroot", default="/opt/ml/input/final/HR_VITON/data")
+    parser.add_argument("--dataroot", default="/opt/ml/input/VTO/app/data")
     parser.add_argument("--datamode", default="test")
     parser.add_argument("--data_list", default="test_pairs_v1.txt")
     parser.add_argument("--output_dir", type=str, default="./Output")
@@ -105,8 +105,10 @@ def get_opt():
 
     parser.add_argument('--tensorboard_dir', type=str, default='./data/tensorboard', help='save tensorboard infos')
     parser.add_argument('--checkpoint_dir', type=str, default='checkpoints', help='save checkpoint infos')
-    parser.add_argument('--tocg_checkpoint', type=str, default='/opt/ml/input/final/HR_VITON/eval_models/weights/v0.1/mtviton.pth', help='tocg checkpoint')
-    parser.add_argument('--gen_checkpoint', type=str, default='/opt/ml/input/final/HR_VITON/eval_models/weights/v0.1/gen.pth', help='G checkpoint')
+    # parser.add_argument('--tocg_checkpoint', type=str, default='/opt/ml/input/VTO/HR_VITON/eval_models/weights/v0.1/mtviton.pth', help='tocg checkpoint')
+    # parser.add_argument('--gen_checkpoint', type=str, default='/opt/ml/input/VTO/HR_VITON/eval_models/weights/v0.1/gen.pth', help='G checkpoint')
+    parser.add_argument('--tocg_checkpoint', type=str, default='/opt/ml/input/VTO/HR_VITON/eval_models/weights/v0.1/tocg_final.pth', help='tocg checkpoint')
+    parser.add_argument('--gen_checkpoint', type=str, default='/opt/ml/input/VTO/HR_VITON/eval_models/weights/v0.1/gen_model_final.pth', help='G checkpoint')
 
     parser.add_argument("--tensorboard_count", type=int, default=100)
     parser.add_argument("--shuffle", action='store_true', help='shuffle input data')
@@ -133,8 +135,7 @@ def get_opt():
     parser.add_argument('--num_upsampling_layers', choices=('normal', 'more', 'most'), default='most', # normal: 256, more: 512
                         help="If 'more', adds upsampling layer between the two middle resnet blocks. If 'most', also add one more upsampling + resnet layer at the end of the generator")
 
-    parser.add_argument('--md', default='03964_00.jpg')
-    parser.add_argument('--cloth', default='13172_00.jpg')
+    parser.add_argument('--id', default="243f8ecb-da60-47ea-ab3a-a7ffa7b062e3")
     opt = parser.parse_args()
     return opt
 def load_checkpoint_G(model, checkpoint_path,opt):
@@ -156,8 +157,7 @@ def get_image(id:str):
     opt = get_opt()
     os.environ["CUDA_VISIBLE_DEVICES"] = opt.gpu_ids
 
-    # opt.md = f"{id}_md.jpg"
-    # opt.cloth = f"{id}_cloth.jpg"
+    opt.id = id
     
     # create test dataset & loader
     test_dataset = CPDatasetTest(opt)
@@ -177,7 +177,7 @@ def get_image(id:str):
     load_checkpoint(tocg, opt.tocg_checkpoint,opt)
     load_checkpoint_G(generator, opt.gen_checkpoint,opt)
 
-    get_prediction(opt ,test_loader, tocg, generator, id)
+    get_prediction(opt ,test_loader, tocg, generator)
 
     return FileResponse(''.join(["./Output/",f"{id}.png"]))
 
@@ -192,16 +192,14 @@ async def upload_md(md_file: UploadFile = File(...),
     # id = str(uuid4())
     id = "243f8ecb-da60-47ea-ab3a-a7ffa7b062e3"
     
-    # md_content = await md_file.read()
-
     md_content = await md_file.read()
-    # pil_image = Image.open(io.BytesIO(md_content))
+    pil_image = Image.open(io.BytesIO(md_content))
 
     # resize image to expected input shape
-    # pil_image = pil_image.resize((768, 1024))
-    # pil_image.save(f"{UPLOAD_DIR_MD}/{id}_md.jpg")
-    with open(os.path.join(UPLOAD_DIR_MD, f'{id}.jpg'), "wb") as fp:
-        fp.write(md_content)  # 서버 로컬 스토리지에 이미지 저장 (쓰기)
+    pil_image = pil_image.resize((768, 1024))
+    pil_image.save(f"{UPLOAD_DIR_MD}/{id}.jpg")
+    # with open(os.path.join(UPLOAD_DIR_MD, f'{id}.jpg'), "wb") as fp:
+    #     fp.write(md_content)  # 서버 로컬 스토리지에 이미지 저장 (쓰기)
 
     cloth_content = await cloth_file.read()
     # cloth_filename = f"{id}_cloth.jpg"  # uuid로 유니크한 파일명으로 변경
@@ -219,26 +217,18 @@ async def upload_md(md_file: UploadFile = File(...),
     #                      original2mask(id),
     #                     )
     
+    # 동기식
     await original2refocus(id)
     await densepose(id)
     await humanparse(id)
     await openpose(id)
     await original2mask(id)
                         
-    output = subprocess.getoutput("../HR_VITON/get_parse_agnostic.py")
-    print(output)
+    subprocess.call(["python","../HR_VITON/get_parse_agnostic.py"])
 
     print(f"End time {time.time() - start_time}")
     
     return {"id": id}
-
-# async def main(cloth_filename, md_filename) :
-#     await asyncio.gather(original2refocus(id),
-#                          densepose(id),
-#                          humanparse(id),
-#                          openpose(id),
-#                          original2mask(id),
-#                         )
 
 # [cloth_mask] Server
 async def original2refocus(id):
@@ -281,8 +271,18 @@ async def original2mask(id):
     mask_res  = requests.post("http://49.50.163.219:30003/cloth-mask/",
                     files=files)
 
-    with open(f'data/test/cloth_mask/{id}.jpg', 'wb') as f:
-        f.write(mask_res.content)
+    # with open(f'data/test/cloth_mask/{id}.jpg', 'wb') as f:
+    #     f.write(mask_res.content)
+
+    mask_data = mask_res.content
+    mask_nparr = np.frombuffer(mask_data, np.uint8)
+    mask_img = cv2.imdecode(mask_nparr, cv2.IMREAD_UNCHANGED)
+
+    # save image to file
+    mask_img = Image.fromarray(mask_img)
+    mask_path = os.path.join('data/test/cloth-mask', f"{id}.jpg")
+    mask_img.save(mask_path)
+
     print("End : original2mask")
 
 # [densepose] Server
@@ -325,11 +325,13 @@ async def humanparse(id):
                         files=files)
     hp_data = hp_res.content
     hp_nparr = np.frombuffer(hp_data, np.uint8)
-    hp_nparr = cv2.imdecode(hp_nparr, cv2.IMREAD_COLOR)
+    hp_nparr = cv2.imdecode(hp_nparr, cv2.IMREAD_UNCHANGED)
+    print(hp_nparr.shape)
+
 
     # save image to file
     hp_img = Image.fromarray(hp_nparr)
-    hp_path = os.path.join('data/test/image-parse-v3', f"{id}.jpg")
+    hp_path = os.path.join('data/test/image-parse-v3', f"{id}.png")
     hp_img.save(hp_path)
 
     # with open('data/test/image-parse-v3/humanparse.jpg', 'wb') as f:
@@ -363,7 +365,7 @@ async def openpose(id):
 
     # save image to file
     dp_img = Image.fromarray(dp_nparr)
-    dp_path = os.path.join('data/test/openpose_img', f"{id}.jpg")
+    dp_path = os.path.join('data/test/openpose_img', f"{id}.png")
     dp_img.save(dp_path)
     
     json_path = os.path.join('data/test/openpose_json', f"{id}.jpg".replace('.jpg', '.json'))
@@ -373,50 +375,16 @@ async def openpose(id):
     print("End : openpose")
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 # 다른 Server
 # TODO : get - 서버에 저장되어있는 원본 이미지 불러오기
-@app.get('/upload_clothmask', description="ClothMask")
-async def upload_clothmask() :
-                        #    cloth_file : UploadFile = File(...)) :
+# @app.get('/upload_clothmask', description="ClothMask")
+# async def upload_clothmask() :
+#                         #    cloth_file : UploadFile = File(...)) :
 
-    CLOTH_DIR = "./data/test/cloth/85c43863-4efa-4f03-a180-51bc06320ac6_cloth.jpg"
-    cloth = open(CLOTH_DIR, "rb")
-    # CLOTH_MASK_DIR = "./data/test/cloth_mask"  # 이미지를 저장할 서버 경로
+#     CLOTH_DIR = "./data/test/cloth/85c43863-4efa-4f03-a180-51bc06320ac6_cloth.jpg"
+#     cloth = open(CLOTH_DIR, "rb")
 
-    # id = str(uuid4())
-
-    # cloth_content = await cloth_file.read()
-    # cloth_filename = f"{id}_cloth.jpg"  # uuid로 유니크한 파일명으로 변경
-    # with open(os.path.join(CLOTH_DIR, cloth_filename), "wb") as fp:
-    #     fp.write(cloth_content)  # 서버 로컬 스토리지에 이미지 저장 (쓰기)
-
-    # cloth_mask_content = await maks_file.read()
-    # cloth_mask_filename = f"{id}_cloth_mask.jpg"  # uuid로 유니크한 파일명으로 변경
-    # with open(os.path.join(CLOTH_MASK_DIR, cloth_mask_filename), "wb") as fp:
-    #     fp.write(cloth_mask_content)  # 서버 로컬 스토리지에 이미지 저장 (쓰기)
-    print("good")
-    # with open("image.jpg", "wb") as f:
-    #     f.write(await image.read())
-    return FileResponse(CLOTH_DIR)
-
-    # return {"id": id,
-    #         "image": cloth_filename}
-
+#     return FileResponse(CLOTH_DIR)
 # TODO : post - Inference한 이미지 서버에 저장
 
 

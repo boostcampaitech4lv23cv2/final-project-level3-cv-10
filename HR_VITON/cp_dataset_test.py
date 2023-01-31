@@ -19,9 +19,10 @@ class CPDatasetTest(data.Dataset):
         self.opt = opt
         self.root = opt.dataroot
         self.datamode = opt.datamode # train or test or self-defined
-        self.data_list = opt.data_list
-        self.data_md_name = opt.md
-        self.data_cloth_name = opt.cloth
+        # self.data_list = opt.data_list
+        # self.data_md_name = opt.md
+        # self.data_cloth_name = opt.cloth
+        self.id = opt.id
         self.fine_height = opt.fine_height
         self.fine_width = opt.fine_width
         self.semantic_nc = opt.semantic_nc
@@ -36,8 +37,10 @@ class CPDatasetTest(data.Dataset):
         # with open(osp.join(opt.dataroot, opt.data_list), 'r') as f:
         #     for line in f.readlines():
         #         im_name, c_name = line.strip().split()
-        im_names.append(self.data_md_name)
-        c_names.append(self.data_cloth_name )
+        # im_names.append(self.data_md_name)
+        # c_names.append(self.data_cloth_name )
+        im_names.append(f"{self.id}.jpg")
+        c_names.append(f"{self.id}.jpg")
 
         self.im_names = im_names
         self.c_names = dict()
@@ -192,12 +195,14 @@ class CPDatasetTest(data.Dataset):
         im_c = im * pcm + (1 - pcm)
         
         # load pose points
-        pose_name = im_name.replace('.jpg', '_rendered.png')
+        # pose_name = im_name.replace('.jpg', '_rendered.png')
+        pose_name = self.id + ".png"
         pose_map = Image.open(osp.join(self.data_path, 'openpose_img', pose_name))
         pose_map = transforms.Resize(self.fine_width, interpolation=2)(pose_map)
         pose_map = self.transform(pose_map)  # [-1,1]
         
-        pose_name = im_name.replace('.jpg', '_keypoints.json')
+        # pose_name = im_name.replace('.jpg', '_keypoints.json')
+        pose_name = self.id + ".json"
         with open(osp.join(self.data_path, 'openpose_json', pose_name), 'r') as f:
             pose_label = json.load(f)
             pose_data = pose_label['people'][0]['pose_keypoints_2d']
@@ -206,7 +211,8 @@ class CPDatasetTest(data.Dataset):
 
         
         # load densepose
-        densepose_name = im_name.replace('image', 'image-densepose')
+        # densepose_name = im_name.replace('image', 'image-densepose')
+        densepose_name = self.id + ".jpg"
         densepose_map = Image.open(osp.join(self.data_path, 'image-densepose', densepose_name))
         densepose_map = transforms.Resize(self.fine_width, interpolation=2)(densepose_map)
         densepose_map = self.transform(densepose_map)  # [-1,1]

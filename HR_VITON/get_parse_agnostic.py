@@ -33,6 +33,7 @@ def get_im_parse_agnostic(im_parse, pose_data, w=768, h=1024):
             radius = r*4 if i == pose_ids[-1] else r*15
             mask_arm_draw.ellipse((pointx-radius, pointy-radius, pointx+radius, pointy+radius), 'white', 'white')
             i_prev = i
+        
         parse_arm = (np.array(mask_arm) / 255) * (parse_array == parse_id).astype(np.float32)
         agnostic.paste(0, None, Image.fromarray(np.uint8(parse_arm * 255), 'L'))
 
@@ -45,8 +46,8 @@ def get_im_parse_agnostic(im_parse, pose_data, w=768, h=1024):
 
 if __name__=="__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--data_path', type=str, help="dataset dir")
-    parser.add_argument('--output_path', type=str, help="output dir")
+    parser.add_argument('--data_path', default="/opt/ml/input/VTO/app/data/test", type=str, help="dataset dir")
+    parser.add_argument('--output_path', default="/opt/ml/input/VTO/app/data/test/image-parse-agnostic-v3.2", type=str, help="output dir")
 
     args = parser.parse_args()
     data_path = args.data_path
@@ -57,7 +58,7 @@ if __name__=="__main__":
     for im_name in tqdm(os.listdir(osp.join(data_path, 'image'))):
         
         # load pose image
-        pose_name = im_name.replace('.jpg', '_keypoints.json')
+        pose_name = im_name.replace('.jpg', '.json')
         
         try:
             with open(osp.join(data_path, 'openpose_json', pose_name), 'r') as f:
@@ -76,3 +77,4 @@ if __name__=="__main__":
         agnostic = get_im_parse_agnostic(im_parse, pose_data)
         
         agnostic.save(osp.join(output_path, parse_name))
+        print("get_parse_agnostic end")
