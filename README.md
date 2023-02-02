@@ -3,9 +3,9 @@
 CV-10
 ## 조물주 김영민
 
----
+
 ## :notebook: Project Abstract
----
+
 
 ### :page_with_curl: Background
 국내 온라인 패션 시장이 코로나19의 영향으로 빠르게 성장했고, 앞으로도 그런 기조를 보일 예정입니다. 그러나 온라인에서 옷을 직접 입어보지 못해 고객들이 자신과 옷이 어울리는지 확인하기 어렵습니다. 저희는 Virtual Try-On 모델을 활용해 온라인 가상 피팅 서비스를 제공하여 많은 고객에게 편리한 서비스를 제공하려고 합니다.
@@ -16,15 +16,13 @@ CV-10
 |   김원회   |   김의진   |  김진섭   |  전영주   |  함수민  |
 | :--------: | :--------: | :------: | :-------: | :-------: |
 |   T4042   |   T4046   |  T4053   |  T4189   |  T4227  |
-|
+
 
 <br/>
 
 #### :computer: Tech stack
 
- <img src="https://img.shields.io/badge/Python-3776AB?style=flat&logo=Python&logoColor=white"/>  <img src="https://img.shields.io/badge/PyTorch-EE4C2C?style=flat&logo=PyTorch&logoColor=white"/> <img src="https://img.shields.io/badge/FastAPI
--009688?style=flat&logo=FastAPI&logoColor=white"/> <img src="https://img.shields.io/badge/Streamlit
--FF4B4B?style=flat&logo=Streamlit&logoColor=white"/>
+ <img src="https://img.shields.io/badge/Python-3776AB?style=flat&logo=Python&logoColor=white"/>  <img src="https://img.shields.io/badge/PyTorch-EE4C2C?style=flat&logo=PyTorch&logoColor=white"/> <img src="https://img.shields.io/badge/FastAPI-009688?style=flat&logo=FastAPI&logoColor=white"/> <img src="https://img.shields.io/badge/Streamlit-FF4B4B?style=flat&logo=Streamlit&logoColor=white"/>
 <br/>
 
 #### :minidisc: Feature
@@ -41,9 +39,9 @@ CV-10
 <br/>
 <br/>
 
----
+
 ## Data
----
+
 
 ### :black_square_button: Data resource
 ![](/imgs/aihub.png)
@@ -60,19 +58,19 @@ HR-VITON의 input으로는 model, cloth images를 바탕으로 전처리 된 입
 <br/>
 
 #### :small_red_triangle_down: Pose Estimation
-![](/imgs/openpose.png)
+![](/imgs/openpose_ex.png)
 <br/>
 
 #### :small_red_triangle_down: Human Parsing
-![](/imgs/humanparsing.jpg)
+![](/imgs/humanparse_ex.jpg)
 <br/>
 
 #### :small_red_triangle_down: Dense Pose
-![](/imgs/densepose.jpg)
+![](/imgs/densepose_ex.jpg)
 <br/>
 
 #### :small_red_triangle_down: Cloth Mask
-![](/imgs/clothmask.jpg)
+![](/imgs/clothmask_ex.jpg)
 <br/>
 
 ---
@@ -80,25 +78,25 @@ HR-VITON의 input으로는 model, cloth images를 바탕으로 전처리 된 입
 ---
 
 #### Condition Generator
-![](/imgs/cg_diagram.png)
+![](/imgs/Conditon_Generator.png)
 
 
 #### Image Generator
-![](/imgs/generator_diagram.png)
+![](/imgs/Image_Generator.png)
 
 <br/>
 <br/>
 
 
----
+
 ## Service Architecture
----
+![](/imgs/service_arc.png)
 <br/>
 <br/>
 
----
+
 ## Demo
----
+
 <br/>
 <br/>
 
