@@ -62,15 +62,15 @@ HR-VITON의 input으로는 model, cloth images를 바탕으로 전처리 된 입
 <br/>
 
 #### :small_red_triangle_down: Human Parsing
-![](/imgs/humanparse_ex.jpg)
+![](/imgs/humanparse_ex.png)
 <br/>
 
 #### :small_red_triangle_down: Dense Pose
-![](/imgs/densepose_ex.jpg)
+![](/imgs/densepose_ex.png)
 <br/>
 
 #### :small_red_triangle_down: Cloth Mask
-![](/imgs/clothmask_ex.jpg)
+![](/imgs/clothmask_ex.png)
 <br/>
 
 ---
