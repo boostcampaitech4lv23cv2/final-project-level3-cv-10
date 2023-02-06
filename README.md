@@ -1,4 +1,4 @@
-# :shirt: Fit Me!!
+# :shirt: Fit Me Up!!
 
 CV-10
 ## 조물주 김영민
