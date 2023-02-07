@@ -1,0 +1,13 @@
+pip install torch==1.7.1+cu110 \
+torchvision==0.8.2+cu110 \
+torchaudio==0.7.2 -f \
+https://download.pytorch.org/whl/torch_stable.html
+
+python -m pip install detectron2==0.5 -f \
+  https://dl.fbaipublicfiles.com/detectron2/wheels/cu110/torch1.7/index.html
+
+pip install av==10.0.0
+pip install scipy==1.10.0 
+pip install opencv-python==4.5.5.64
+
+pip install 
