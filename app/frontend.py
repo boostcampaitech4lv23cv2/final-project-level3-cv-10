@@ -8,6 +8,8 @@ import torch.nn as nn
 from pyparsing import empty
 import asyncio
 
+from google.cloud import storage
+
 def main():
     # Normal
     #----------------------------------------------------------------------------------------------------------------------
@@ -35,10 +37,10 @@ def main():
             md_g = uploaded_md.name
             md_bytes = uploaded_md.getvalue()
             md = Image.open(io.BytesIO(md_bytes))
-            st.image(md, caption='Uploaded Image1')
+            st.image(md, caption='Uploaded Model Image')
 
     with con3 :
-        st.markdown("<h3 style='text-align: center; color: white;'>Choose colth</h3>", unsafe_allow_html=True)
+        st.markdown("<h3 style='text-align: center; color: white;'>Choose cloth</h3>", unsafe_allow_html=True)
         count = 1
         uploaded_cloth = st.file_uploader("",type=["jpg", "jpeg","png"], key=count)
         if uploaded_cloth :
@@ -46,7 +48,7 @@ def main():
             cloth_g = uploaded_cloth.name
             cloth_bytes = uploaded_cloth.getvalue()
             cloth = Image.open(io.BytesIO(cloth_bytes))
-            st.image(cloth, caption='Uploaded Image2')
+            st.image(cloth, caption='Uploaded Cloth Image')
 
     with con4 :
         if st.button('Inference') :
@@ -66,7 +68,7 @@ def main():
                         result = requests.get(f"http://localhost:30001/images/{id}") # 9.35초
 
                         rimg = Image.open(io.BytesIO(result.content))
-                        st.image(rimg, caption='Uploaded Image')
+                        st.image(rimg, caption='Result Image')
                         st.success('success')
                         print(f"Test time {time.time() - iter_start_time}") # 9.39초
             else : 

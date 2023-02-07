@@ -28,6 +28,7 @@ import asyncio
 from urllib.request import urlopen
 import json
 import aiohttp
+import aiofiles
 import subprocess
 # yj
 import cv2 
@@ -107,8 +108,8 @@ def get_opt():
     parser.add_argument('--checkpoint_dir', type=str, default='checkpoints', help='save checkpoint infos')
     # parser.add_argument('--tocg_checkpoint', type=str, default='/opt/ml/input/VTO/HR_VITON/eval_models/weights/v0.1/mtviton.pth', help='tocg checkpoint')
     # parser.add_argument('--gen_checkpoint', type=str, default='/opt/ml/input/VTO/HR_VITON/eval_models/weights/v0.1/gen.pth', help='G checkpoint')
-    parser.add_argument('--tocg_checkpoint', type=str, default='/opt/ml/input/VTO/HR_VITON/eval_models/weights/v0.1/tocg_final.pth', help='tocg checkpoint')
-    parser.add_argument('--gen_checkpoint', type=str, default='/opt/ml/input/VTO/HR_VITON/eval_models/weights/v0.1/gen_model_final.pth', help='G checkpoint')
+    parser.add_argument('--tocg_checkpoint', type=str, default='/opt/ml/input/VTO/HR_VITON/eval_models/weights/v0.1/final_0203.pth', help='tocg checkpoint')
+    parser.add_argument('--gen_checkpoint', type=str, default='/opt/ml/input/VTO/HR_VITON/eval_models/weights/v0.1/gen_step_040000.pth', help='G checkpoint')
 
     parser.add_argument("--tensorboard_count", type=int, default=100)
     parser.add_argument("--shuffle", action='store_true', help='shuffle input data')
@@ -179,7 +180,8 @@ def get_image(id:str):
 
     get_prediction(opt ,test_loader, tocg, generator)
 
-    return FileResponse(''.join(["./Output/",f"{id}.png"]))
+    return FileResponse(''.join(["/opt/ml/input/VTO/app/output/test/test/unpaired/generator/output/",f"{id}_{id}.png"]))
+    
 
 
 # 클라이언트에게 image를 요청 (cloth, md)
@@ -209,13 +211,13 @@ async def upload_md(md_file: UploadFile = File(...),
     start_time = time.time() 
     print("Start")
     # await main(cloth_filename, md_filename)
-    # async with aiohttp.ClientSession() as sess:           
-    # await asyncio.gather(original2refocus(id),  
-    #                      densepose(id),
-    #                      humanparse(id),
-    #                      openpose(id),
-    #                      original2mask(id),
-    #                     )
+        
+    # await asyncio.gather(humanparse(id),
+                        #  original2refocus(id),  
+                        #  densepose(id),
+                        #  openpose(id),
+                        # original2mask(id),
+                        # )
     
     # 동기식
     await original2refocus(id)
@@ -233,7 +235,6 @@ async def upload_md(md_file: UploadFile = File(...),
 # [cloth_mask] Server
 async def original2refocus(id):
     print("Start : original2refocus")
-    # await asyncio.sleep(5)
     image_path = f"./data/test/cloth_base/{id}.jpg"
     image = cv2.imread(image_path)
     img_data = cv2.imencode(".jpg", image)[1]
@@ -260,7 +261,6 @@ async def original2refocus(id):
 
 async def original2mask(id):
     print("Start : original2mask")
-
     refocus_path = f"./data/test/cloth_base/{id}.jpg"
     refocus_image = cv2.imread(refocus_path)
     refocus_data = cv2.imencode(".jpg", refocus_image)[1]
@@ -296,7 +296,7 @@ async def densepose(id):
         'image': ('a.jpg', img_data.tobytes(), 'image/jpg', {'Expires': '0'})
     }   
 
-    dp_res = requests.post("http://49.50.163.219:30004/densepose/",
+    dp_res = requests.post("http://101.101.219.177:30001/densepose/",
                         files=files)
 
     dp_data = dp_res.content
@@ -313,6 +313,7 @@ async def densepose(id):
 # [humanparse] Server
 async def humanparse(id):
     print("Start : humanparse")
+
     image_path = f"./data/test/image/{id}.jpg"
     image = cv2.imread(image_path)
     img_data = cv2.imencode(".jpg", image)[1]
@@ -323,11 +324,19 @@ async def humanparse(id):
 
     hp_res = requests.post("http://49.50.163.219:30005/human-parse/",
                         files=files)
+
+    # image_path = f"./data/test/image/{id}.jpg"
+    # headers = {'Content-Type': 'image/jpeg'}
+    # with open(image_path, 'rb') as f:
+    #     file_data = f.read()
+
+    # print(file_data)
+
+    # async with aiohttp.ClientSession() as sess:   
+    #     async with sess.post('http://49.50.163.219:30005/human-parse/', data= file_data, headers=headers) as hp_res:
     hp_data = hp_res.content
     hp_nparr = np.frombuffer(hp_data, np.uint8)
     hp_nparr = cv2.imdecode(hp_nparr, cv2.IMREAD_UNCHANGED)
-    print(hp_nparr.shape)
-
 
     # save image to file
     hp_img = Image.fromarray(hp_nparr)
@@ -350,9 +359,9 @@ async def openpose(id):
         'image': ('a.jpg', img_data.tobytes(), 'image/jpg', {'Expires': '0'})
     }   
 
-    dp_res = requests.post("http://49.50.163.219:30006/openpose-img/",
+    dp_res = requests.post("http://49.50.164.210:30003/openpose-img/",
                         files=files)
-    json_res = requests.post("http://49.50.163.219:30006/openpose-json/",
+    json_res = requests.post("http://49.50.164.210:30003/openpose-json/",
                         files=files)
     
     dp_data = dp_res.content
@@ -386,6 +395,5 @@ async def openpose(id):
 
 #     return FileResponse(CLOTH_DIR)
 # TODO : post - Inference한 이미지 서버에 저장
-
 
 # 사이즈 1024,768 model이미지 변경하고 전달 -> image 폴더안에
