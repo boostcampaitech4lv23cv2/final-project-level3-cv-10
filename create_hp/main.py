@@ -1,6 +1,6 @@
 from fastapi.responses import FileResponse, Response, StreamingResponse
 
-from fastapi import FastAPI, File, Form
+from fastapi import FastAPI, File, Form,UploadFile
 from pydantic import BaseModel, Field
 from typing import Optional
 from PIL import Image 
@@ -13,11 +13,10 @@ import subprocess, shutil
 app = FastAPI()
 
 @app.post('/human-parse/')
-def create_file(
+async def create_file(
     image: bytes = File(...),
 ):
     img = Image.open(io.BytesIO(image))
-    
     id_2_str = str(uuid4())    
     model_folder = os.path.join("/opt/ml/Final_Project/data/model_image", id_2_str)
     output_folder = os.path.join("/opt/ml/Final_Project/data/humanparse_output", id_2_str)

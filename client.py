@@ -4,6 +4,7 @@ import numpy as np
 import json
 from PIL import Image
 import os, argparse
+import asyncio
 
 def original2refocus(image_name):
     # original cloth to refocus cloth
@@ -45,7 +46,7 @@ def original2mask(image_name):
     mask_data = mask_res.content
 
     mask_nparr = np.frombuffer(mask_data, np.uint8)
-    mask_img = cv2.imdecode(mask_nparr, cv2.IMREAD_UNCHANGED)
+    mask_img = cv2.imdecode(mask_nparr, cv2.IMREAD_GRAYSCALE)
     
     # save image to file
     mask_img_file = Image.fromarray(mask_img)
@@ -53,7 +54,7 @@ def original2mask(image_name):
     mask_path = os.path.join('mask', image_name)
     mask_img_file.save(mask_path)
     
-# model image to densepose 
+# # model image to densepose 
 def model2densepose(model_image_name):
     image_path = os.path.join('model', model_image_name)
     image = cv2.imread(image_path)
@@ -76,8 +77,8 @@ def model2densepose(model_image_name):
     dp_img = Image.fromarray(dp_nparr)
 
     dp_path = os.path.join('densepose', model_image_name)
-    dp_img.save(dp_path)
-    
+    dp_img.save(dp_path)  
+        
 def model2humanparse(model_image_name):
     image_path = os.path.join('model', model_image_name)
     image = cv2.imread(image_path)
@@ -94,7 +95,7 @@ def model2humanparse(model_image_name):
     dp_data = dp_res.content
     
     dp_nparr = np.frombuffer(dp_data, np.uint8)
-    dp_nparr = cv2.imdecode(dp_nparr, cv2.IMREAD_UNCHANGED)
+    dp_nparr = cv2.imdecode(dp_nparr, cv2.IMREAD_GRAYSCALE)
 
     # save image to file
     dp_img = Image.fromarray(dp_nparr)
@@ -144,10 +145,10 @@ if __name__ == "__main__":
     image_name = args.image_name
     model_image_name = args.model_name
     
-    # model2humanparse(model_image_name)
     # original2refocus(image_name)
     # original2mask(image_name)
-    model2densepose(model_image_name)
-    model2openpose(model_image_name)
-
-    # humanparse가 끝나기 전에 다른 함수 clear
+    # model2densepose(model_image_name)
+    model2humanparse(model_image_name)
+    # model2openpose(model_image_name)
+    
+    # asyncio.gather(densepose(model_image_name))
