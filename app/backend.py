@@ -30,6 +30,8 @@ import json
 import aiohttp
 import aiofiles
 import subprocess
+from google.cloud import storage
+
 # yj
 import cv2 
 import requests
@@ -189,24 +191,44 @@ def get_image(id:str):
 async def upload_md(md_file: UploadFile = File(...),
                     cloth_file: UploadFile = File(...)):
 
-    UPLOAD_DIR_MD = "./data/test/image"  # 이미지를 저장할 서버 경로
-    UPLOAD_DIR_CLOTH = "./data/test/cloth_base"  # 이미지를 저장할 서버 경로
-    # id = str(uuid4())
-    id = "243f8ecb-da60-47ea-ab3a-a7ffa7b062e3"
+    UPLOAD_DIR_MD = "data/test/image"  # 이미지를 저장할 서버 경로
+    UPLOAD_DIR_CLOTH = "data/test/cloth-base"  # 이미지를 저장할 서버 경로
+
+    id = str(uuid4())
+    # id = "243f8ecb-da60-47ea-ab3a-a7ffa7b062e3"
+
+    bucket_name = 'fm_save'    # 서비스 계정 생성한 bucket 이름 입력
+    destination_blob_name = f'{id}.jpg'    # 업로드할 파일을 GCP에 저장할 때의 이름
+
+    storage_client = storage.Client()
+    bucket = storage_client.bucket(bucket_name)
+
+    blob_md = bucket.blob(os.path.join(UPLOAD_DIR_MD, destination_blob_name))
+    blob_cloth = bucket.blob(os.path.join(UPLOAD_DIR_CLOTH, destination_blob_name))
     
     md_content = await md_file.read()
-    pil_image = Image.open(io.BytesIO(md_content))
-
-    # resize image to expected input shape
-    pil_image = pil_image.resize((768, 1024))
-    pil_image.save(f"{UPLOAD_DIR_MD}/{id}.jpg")
-    # with open(os.path.join(UPLOAD_DIR_MD, f'{id}.jpg'), "wb") as fp:
-    #     fp.write(md_content)  # 서버 로컬 스토리지에 이미지 저장 (쓰기)
+    pil_image = io.BytesIO(md_content)
+    pil_image.seek(0)
+    blob_md.upload_from_file(pil_image, content_type="image/jpg")
 
     cloth_content = await cloth_file.read()
-    # cloth_filename = f"{id}_cloth.jpg"  # uuid로 유니크한 파일명으로 변경
-    with open(os.path.join(UPLOAD_DIR_CLOTH, f'{id}.jpg'), "wb") as fp:
-        fp.write(cloth_content)  # 서버 로컬 스토리지에 이미지 저장 (쓰기)
+    blob_cloth.upload_from_file(io.BytesIO(cloth_content), content_type="image/png")
+
+    #################################################################################################
+
+    # md_content = await md_file.read()
+    # pil_image = Image.open(io.BytesIO(md_content))
+
+    # # resize image to expected input shape
+    # pil_image = pil_image.resize((768, 1024))
+    # pil_image.save(f"{UPLOAD_DIR_MD}/{id}.jpg")
+    # # with open(os.path.join(UPLOAD_DIR_MD, f'{id}.jpg'), "wb") as fp:
+    # #     fp.write(md_content)  # 서버 로컬 스토리지에 이미지 저장 (쓰기)
+
+    # cloth_content = await cloth_file.read()
+    # # cloth_filename = f"{id}_cloth.jpg"  # uuid로 유니크한 파일명으로 변경
+    # with open(os.path.join(UPLOAD_DIR_CLOTH, f'{id}.jpg'), "wb") as fp:
+    #     fp.write(cloth_content)  # 서버 로컬 스토리지에 이미지 저장 (쓰기)
 
     start_time = time.time() 
     print("Start")
@@ -220,13 +242,13 @@ async def upload_md(md_file: UploadFile = File(...),
                         # )
     
     # 동기식
-    await original2refocus(id)
-    await densepose(id)
-    await humanparse(id)
-    await openpose(id)
-    await original2mask(id)
+    # await original2refocus(id)
+    # await densepose(id)
+    # await humanparse(id)
+    # await openpose(id)
+    # await original2mask(id)
                         
-    subprocess.call(["python","../HR_VITON/get_parse_agnostic.py"])
+    # subprocess.call(["python","../HR_VITON/get_parse_agnostic.py"])
 
     print(f"End time {time.time() - start_time}")
     

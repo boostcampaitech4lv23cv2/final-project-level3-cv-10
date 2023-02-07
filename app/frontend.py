@@ -7,7 +7,6 @@ import requests
 import torch.nn as nn
 from pyparsing import empty
 import asyncio
-
 from google.cloud import storage
 
 def main():
@@ -56,7 +55,18 @@ def main():
                 with st.spinner('Wait for it...'):
                     with con5 :
                         iter_start_time = time.time() 
-                        # act()
+
+                        # bucket_name = 'fm_save'    # 서비스 계정 생성한 bucket 이름 입력
+                        # destination_blob_name = 'test.jpg'    # 업로드할 파일을 GCP에 저장할 때의 이름
+                        # storage_client = storage.Client()
+                        # bucket = storage_client.bucket(bucket_name)
+                        # blob = bucket.blob(destination_blob_name)
+
+                        # # file_obj = io.BytesIO(cloth_bytes)
+                        # # file_obj.seek(0)
+
+                        # blob.upload_from_filename("/opt/ml/input/VTO/app/Output/243f8ecb-da60-47ea-ab3a-a7ffa7b062e3.png")
+                        
                         # st.success('success', icon="✅")
                         files = [
                             ('md_file', (uploaded_md.name, md_bytes, uploaded_md.type)),
@@ -65,10 +75,11 @@ def main():
 
                         response = requests.post("http://localhost:30001/upload_images",  files=files) # 2.17초
                         id = response.json()['id']
-                        result = requests.get(f"http://localhost:30001/images/{id}") # 9.35초
+                        # result = requests.get(f"http://localhost:30001/images/{id}") # 9.35초
 
-                        rimg = Image.open(io.BytesIO(result.content))
-                        st.image(rimg, caption='Result Image')
+                        # rimg = Image.open(io.BytesIO(result.content))
+                        # st.image(rimg, caption='Result Image')
+                        print(id)
                         st.success('success')
                         print(f"Test time {time.time() - iter_start_time}") # 9.39초
             else : 
