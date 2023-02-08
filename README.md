@@ -25,7 +25,9 @@ CV-10
 
 #### :computer: Tech stack
 <br/>
- <img src="https://img.shields.io/badge/Python-3776AB?style=flat&logo=Python&logoColor=white"/>  <img src="https://img.shields.io/badge/PyTorch-EE4C2C?style=flat&logo=PyTorch&logoColor=white"/> <img src="https://img.shields.io/badge/FastAPI-009688?style=flat&logo=FastAPI&logoColor=white"/> <img src="https://img.shields.io/badge/Streamlit-FF4B4B?style=flat&logo=Streamlit&logoColor=white"/>
+
+
+<img src="https://img.shields.io/badge/Python-3776AB?style=flat&logo=Python&logoColor=white"/> <img src="https://img.shields.io/badge/PyTorch-EE4C2C?style=flat&logo=PyTorch&logoColor=white"/> <img src="https://img.shields.io/badge/TensorFlow-FF6F00?style=flat&logo=TensorFlow&logoColor=white"/> <img src="https://img.shields.io/badge/FastAPI-009688?style=flat&logo=FastAPI&logoColor=white"/> <img src="https://img.shields.io/badge/Streamlit-FF4B4B?style=flat&logo=Streamlit&logoColor=white"/>
 <br/>
 <br/>
 
@@ -55,8 +57,6 @@ CV-10
 ![](/imgs/aihub.png)
 AI Hub 패션상품 및 착용 영상 데이터셋 <br/>
 이 중, 정면에서 촬영된 모델과 모델이 입고 있는 상의를 pair로 데이터셋을 구성했습니다.<br/>
-    - train data: 971장 / test data: 489장 <br/>
-    - 해상도 : 1024 X 768<br/>
 <br/>
 
 
