@@ -6,7 +6,7 @@ authors = ["ahnsv <ahnsv@bc.edu>"]
 license = "UNLICENSED"
 
 [tool.poetry.dependencies]
-python = ">=3.6.2,<4.0"
+python = ">=3.7,<4.0"
 fastapi = "^0.68.1"
 uvicorn = "^0.15.0"
 torch = "^1.9.1"
@@ -27,6 +27,7 @@ asyncio = "^3.4.3"
 tqdm = "^4.64.1"
 aiohttp = "^3.8.3"
 gpustat = "^1.0.0"
+google-cloud-storage = "2.7.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.5"
