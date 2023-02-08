@@ -121,9 +121,7 @@ preprocess 된 각 이미지들의 쓰임은 아래 Model Architecture에 기술
 
 
 ## Demo
-### [Demo Link](https://www.notion.so/fdf8e169f3a54c48a2d5e67f2d9186cb#31d4f00c40be431c8f3a032f14ca062a)
-
-
+![demo](imgs/demo.gif)
 
 <br/>
 
@@ -139,5 +137,4 @@ Project page: https://koo616.github.io/HR-VITON
 
 <br/>
 <br/>
-
 

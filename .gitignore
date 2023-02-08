@@ -5,7 +5,7 @@
 **/__pycache__
 **/utils
 **/output
-
+.DS_Store
 **/eval_models/weights
 
 app_test/
